@@ -2,6 +2,7 @@ package com.signin.signInproject.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,8 +10,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class UserService{
-
+public class UserService {
     private final UserRepository userRepository;
 
     @Autowired
@@ -18,33 +18,33 @@ public class UserService{
         this.userRepository = userRepository;
     }
 
-    public List<User> getUsers(){
+
+    public List<User> getUsers() {
         return userRepository.findAll();
     }
 
-    public Optional<User> getUser(Long userId){
+    public Optional<User> getUser(Long userId) {
 
         Optional<User> user = userRepository.findById(userId);
 
-        if(!user.isPresent()){
+        if (!user.isPresent()) {
             throw new IllegalStateException("User not found");
         }
 
         return userRepository.findById(userId);
     }
 
-    public Optional<User> getUserByEmail(String userEmail){
+    public User getUserByEmail(String userEmail) {
 
-        Optional<User> theUser = userRepository.findUserByEmail(userEmail);
-
+        User theUser = userRepository.findUserByEmail(userEmail);
 
         return null;
     }
 
-    public User saveUser(User user){
+    public User saveUser(User user) {
 
-        Optional<User> userEmail = userRepository.findUserByEmail(user.getEmail());
-        if(userEmail.isPresent()){
+        User userEmail = userRepository.findUserByEmail(user.getEmail());
+        if (user.getEmail().equals(userEmail)) {
             throw new IllegalStateException("email taken");
         }
         userRepository.save(user);
@@ -52,17 +52,18 @@ public class UserService{
         return user;
     }
 
-    public void deleteUser(long userId){
+    public void deleteUser(long userId) {
 
         Optional<User> tempUser = userRepository.findById(userId);
 
-        if(!tempUser.isPresent()){
+        if (!tempUser.isPresent()) {
             throw new IllegalStateException("User not found");
         }
 
         userRepository.deleteById(userId);
-        log.info("Deleted user ID is :" +userId);
+        log.info("Deleted user ID is :" + userId);
     }
+
     public Optional<User> updateUser(Long userId, User user) {
 
         Optional<User> theUser = userRepository.findById(userId);
@@ -80,43 +81,45 @@ public class UserService{
         }
     }
 
-        public String loginUser(String email, String password ){
+    public ResponseEntity loginUser(String email, String password) {
 
-            String thePassword = "";
+        String thePassword = "";
 
-            Optional<User> theUser = userRepository.findUserByEmail(email);
+        User theUser = userRepository.findUserByEmail(email);
 
-            if(theUser.isPresent()){
-                thePassword = theUser.get().getPassword();
-            }
+        if (!theUser.equals(null) || !theUser.equals("")) {
+            thePassword = theUser.getPassword();
+        }
 
-            if(!password.equals(thePassword) && !password.isEmpty()){
-                throw new RuntimeException("password is not correct!");
-            }
+        if (!password.equals(thePassword) && !password.isEmpty()) {
+            throw new RuntimeException("password is not correct!");
+        }
 
-            return "ok";
+        return ResponseEntity.ok("User logged In!");
     }
 
-    public Optional<User> registerUser(String email,
-                                       String firstName,
-                                       String lastName,
-                                       String dateOfBirth,
-                                       String password) {
+    public User registerUser(String email,
+                             String firstName,
+                             String lastName,
+                             String dateOfBirth,
+                             String password) {
+        User user = new User();
 
-        Optional<User> theUser = userRepository.findUserByEmail(email);
+        User theUser = userRepository.findUserByEmail(email);
 
-        if(!theUser.isPresent()){
-            theUser.get().setEmail(email);
-            theUser.get().setFirstName(firstName);
-            theUser.get().setLastName(lastName);
-            theUser.get().setDateOfBirth(dateOfBirth);
-            theUser.get().setPassword(password);
+        if (theUser == null) {
 
-            return Optional.of(userRepository.save(theUser.get()));
-
-        }else {
-            throw new RuntimeException("User is already exist!");
+            user.setEmail(email);
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setDateOfBirth(dateOfBirth);
+            user.setPassword(password);
+        } else {
+            System.out.println("the user already exist!");
+            throw new RuntimeException("User is already exists!");
         }
+        return userRepository.save(user);
 
     }
 }
+
